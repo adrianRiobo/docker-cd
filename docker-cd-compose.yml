@@ -1,0 +1,46 @@
+rundeck:
+    image: jordan/rundeck
+    container_name: rundeck-compose
+    environment:
+        - SERVER_URL=${AAD_RUNDECK_URL}
+    ports:
+        - "4440:4440"
+    volumes:
+        - "rundeck-config:/etc/rundeck"
+        - "rundeck-projects:/var/rundeck"
+        - "rundeck-storage:/var/lib/rundeck/var/storage"
+        - "rundeck-mysql:/var/lib/mysql"
+
+nexus3:
+   image: sonatype/nexus3
+   container_name: nexus3-compose
+   ports:
+        - "8081:8081"
+   volumes:
+        - "nexus3-data:/nexus-data"
+
+sonarqube-db:
+   image: postgres:9.5.2
+   container_name: sonarqube-db
+   volumes:
+        - "sonarqube-db:/var/lib/postgresql/data"
+   environment:
+        - POSTGRES_PASSWORD=${AAD_SONARQUBEDB_PASS}
+        - POSTGRES_USER=${AAD_SONARQUBEDB_USER}
+        - POSTGRES_DB=${AAD_SONARQUBEDB_BD}
+
+sonarqube-server:
+   image: sonarqube:5.4
+   container_name: sonarqube-server
+   links:
+        - sonarqube-db:sonardb
+   ports:
+        - "9000:9000"
+        - "9092:9092"
+   volumes:
+        - "sonarqube-data:/opt/sonarqube/data"
+        - "sonarqube-config:/opt/sonarqube/conf"
+   environment:
+        - SONARQUBE_JDBC_USERNAME=${AAD_SONARQUBEDB_USER}
+        - SONARQUBE_JDBC_PASSWORD=${AAD_SONARQUBEDB_PASS}
+        - SONARQUBE_JDBC_URL=jdbc:postgresql://sonardb/${AAD_SONARQUBEDB_BD}
